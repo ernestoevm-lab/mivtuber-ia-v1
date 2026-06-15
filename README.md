@@ -13,7 +13,7 @@ a partir de dos fuentes de navegador que sirve la propia app.
 
 Beta funcional. El flujo principal está probado de extremo a extremo: escribes (o llega un
 mensaje del chat) → personalidad → respuesta del LLM → voz → expresión/movimiento del avatar →
-salida a OBS. Existe un instalador `.exe` para Windows (ver [Releases](https://github.com/ernestoevm-lab/mivtuber-ia/releases)).
+salida a OBS. Existe un instalador `.exe` para Windows (ver [Releases](https://github.com/ernestoevm-lab/mivtuber-ia-v1/releases)).
 No está firmado digitalmente, así que Windows SmartScreen mostrará un aviso la primera vez
 (ver [Solución de problemas](#solución-de-problemas)).
 
@@ -67,7 +67,7 @@ Verificadas en el código y/o en uso real:
 ## Instalación para usuarios (solo usar la app)
 
 1. Descarga `MiVtuberIA_x.y.z_x64-setup.exe` desde la página de
-   [Releases](https://github.com/ernestoevm-lab/mivtuber-ia/releases).
+   [Releases](https://github.com/ernestoevm-lab/mivtuber-ia-v1/releases).
 2. Ejecútalo. Como el instalador no está firmado, Windows mostrará "Windows protegió tu equipo":
    pulsa **Más información → Ejecutar de todas formas**.
 3. Abre **MiVtuberIA** desde el menú de inicio. La app instala el backend y lo arranca sola; no
@@ -85,8 +85,8 @@ y tus claves) se guardan en `%LOCALAPPDATA%\com.mivtuberia.desktop`, separados d
 ## Instalación para desarrolladores (desde el código fuente)
 
 ```powershell
-git clone https://github.com/ernestoevm-lab/mivtuber-ia.git
-cd mivtuber-ia
+git clone https://github.com/ernestoevm-lab/mivtuber-ia-v1.git
+cd mivtuber-ia-v1
 npm install
 ```
 
