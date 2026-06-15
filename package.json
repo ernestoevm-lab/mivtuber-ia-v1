@@ -16,7 +16,8 @@
     "app:dev": "tauri dev",
     "app:build": "tauri build",
     "qa:tikfinity-autonomy": "node --import tsx scripts/qa-tikfinity-autonomy.mjs",
-    "qa:structured": "node --import tsx scripts/qa-structured-response.mjs"
+    "qa:structured": "node --import tsx scripts/qa-structured-response.mjs",
+    "test": "vitest run"
   },
   "dependencies": {
     "@pixiv/three-vrm": "^3.4.2",
@@ -40,6 +41,7 @@
     "@types/three": "^0.184.0",
     "@types/ws": "^8.18.1",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.9"
   }
 }

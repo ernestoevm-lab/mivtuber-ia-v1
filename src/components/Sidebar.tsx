@@ -94,7 +94,7 @@ export function Sidebar({
           </div>
           <div className="brand__text">
             <div className="brand__name">Mi<em>VtuberIA</em></div>
-            <div className="brand__sub"><span className="dot" /> v0.9.4 · local</div>
+            <div className="brand__sub"><span className="dot" /> v{__APP_VERSION__} · local</div>
           </div>
         </div>
 
