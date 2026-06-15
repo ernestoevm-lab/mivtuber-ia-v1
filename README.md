@@ -3,8 +3,8 @@
 Aplicación de escritorio para Windows que da vida a una VTuber con IA llamada **Yumekawa
 Kokoria ("Yuko")**. Corre **localmente en tu PC** (local-first): conversa contigo, narra lo
 que ve en tu pantalla, reacciona al chat de tu directo y mueve un avatar. El "cerebro" puede
-ser un modelo **local** (LM Studio) o en la **nube** (Google Gemini), y la voz puede salir por
-el sintetizador del navegador o por un motor local opcional.
+ser un modelo **local** (LM Studio) o en la **nube** (Gemini, OpenRouter, DeepSeek o MiniMax),
+y la voz puede salir por el sintetizador del navegador o por un motor local opcional.
 
 El panel principal (el "cockpit") es para el operador; lo que ve el público se compone en OBS
 a partir de dos fuentes de navegador que sirve la propia app.
@@ -26,6 +26,8 @@ Verificadas en el código y/o en uso real:
   picante controlado, firme y narrador).
 - **Cerebro híbrido local/nube.** Eliges el proveedor en la pestaña **Modelo**:
   - **Gemini (nube):** pegas tu API key dentro de la app; se verifica y se activa sola.
+  - **OpenRouter / DeepSeek / MiniMax (nube):** cerebros compatibles con OpenAI; pega su API
+    key (en Modelo o Ajustes), elige el modelo y actívalo. Se usan solo si los seleccionas.
   - **LM Studio (local):** usa un modelo que corras en LM Studio (app externa).
 - **Voz (TTS).** Por defecto usa la voz del navegador. Kokoro (voz local) es **experimental** y
   opcional (requiere instalación aparte).
@@ -179,9 +181,9 @@ Basado en el estado real del código:
   por el chat del stream). No existe botón de micrófono.
 - **Twitch es de solo lectura.** Yuko lee el chat de Twitch pero no escribe en él. **YouTube y
   Kick no están integrados.**
-- **OpenRouter, DeepSeek y MiniMax:** puedes guardar sus claves en **Ajustes**, pero el cerebro
-  **todavía no las usa** para responder. Por ahora los proveedores activos para el chat son
-  **LM Studio** y **Gemini**.
+- **Proveedores de nube de pago.** Además de Gemini, puedes usar **OpenRouter**, **DeepSeek** o
+  **MiniMax** como cerebro (compatibles con OpenAI). Requieren tu propia API key y consumen tu
+  cuota/crédito con ese proveedor; solo se usan cuando los seleccionas explícitamente en **Modelo**.
 - **Kokoro (voz local) es experimental.** No viene en el instalador; requiere instalación aparte.
   Sin ella, Yuko habla con la voz del navegador.
 - **La emoción es automática.** Se infiere de cada respuesta y se refleja en el avatar/VTS; no hay
