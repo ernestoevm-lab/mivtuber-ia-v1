@@ -1,0 +1,14 @@
+{
+  "enabled": false,
+  "mode": "off",
+  "intensity": "low",
+  "minCooldownMs": 180000,
+  "silenceThresholdMs": 120000,
+  "maxAutonomousMessagesPer10Min": 2,
+  "allowQuestions": true,
+  "allowNarration": true,
+  "allowLatencyComments": true,
+  "allowLiveChatResponses": true,
+  "liveChatRespondToMentionsFirst": true,
+  "debug": true
+}

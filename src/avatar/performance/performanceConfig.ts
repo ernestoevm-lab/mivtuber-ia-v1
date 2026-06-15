@@ -1,0 +1,20 @@
+export const avatarPerformanceConfig = {
+  breathingIntensity: 0.036,
+  idleSwayIntensity: 0.03,
+  armMotionIntensity: 0.82,
+  gestureIntensity: 0.9,
+  expressionIntensity: 0.72,
+  headMotionIntensity: 0.72,
+  gazeMotionIntensity: 0.42,
+  shoulderMotionIntensity: 0.58,
+  smoothing: 8.4,
+  gazeSmoothing: 6.2,
+  gestureMinCooldownSeconds: 0.82,
+  gestureMaxCooldownSeconds: 1.85,
+  armRestDrop: 1.02,
+  forearmRestFold: 0.24,
+  maxArmLift: 0.56,
+  maxHeadYaw: 0.16,
+  maxHeadPitch: 0.14,
+  maxTorsoTwist: 0.08
+} as const;

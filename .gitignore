@@ -1,0 +1,136 @@
+# --- Coordinación interna de asistentes de IA y contexto privado (no publicar) ---
+.ai/
+.agent/
+.agents/
+.claude/
+.codex/
+.cursor/
+.windsurf/
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+QUE-ES.md
+
+# --- Documentación interna de desarrollo (handoffs, planeación, pruebas manuales, diseño) ---
+docs/AI_*
+docs/handoff-*
+docs/HANDOFF_*
+docs/NEXT_*
+docs/PROJECT_*
+docs/KNOWN_*
+docs/QUESTIONS_FOR_OWNER.md
+docs/RELEASE_NOTES_CURRENT.md
+docs/RESTORE_POINT_MANIFEST.md
+docs/V1_MASTER_PLAN.md
+docs/VTUBER_AI_ROADMAP.md
+docs/VISUAL_NARRATOR_NEXT_STEPS.md
+docs/UI_UX_REDESIGN_IMPLEMENTATION.md
+docs/MANUAL_INDICE.md
+docs/MASCOZ_LIVE2_OBS.md
+docs/luma-avatar-spec.md
+docs/neuro-sama-research.md
+docs/YUKO_STYLE_BIBLE.md
+docs/yuko-character-card.md
+docs/AVATAR_FILE_NOTE.md
+docs/AVATAR_RUNTIME_VOICE_V030_PLAN.md
+docs/TTS_LOW_LATENCY_BENCHMARK_V030.md
+docs/change-log.md
+docs/current-state.md
+docs/rollback.md
+docs/*_MANUAL_TEST.md
+docs/*_TEST.md
+docs/*_TESTS.md
+docs/design/
+docs/research/
+
+# --- Estado local de la app (se genera en runtime; no es semilla de producto) ---
+config/scene.json
+config/tikfinity.json
+
+# Asset fuente sin usar (no referenciado por el código)
+public/icons/Vtubericono2k.jpeg
+
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+.vite/
+.cache/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+config/runtime-model.json
+config/runtime-voice.json
+config/hermes.json
+config/vts.json
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.codex-qa/
+
+# Local databases
+*.sqlite
+*.sqlite3
+*.db
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+data/*.sqlite-wal
+data/*.sqlite-shm
+data/*.sqlite.*
+data/run/
+
+# Backups
+backups/
+*.zip
+
+# Local/private assets
+data/avatar/*.vrm
+data/avatar/current.vrm
+data/backgrounds/*
+!data/backgrounds/.gitkeep
+data/reference-images/
+
+# Kokoro / local model caches
+.local/
+.local/**
+data/tts/
+data/models/
+models/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/settings.json
+
+# Public avatar assets
+public/avatar/*.vrm
+!public/avatar/.gitkeep
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Voice model binaries
+data/voices/*.onnx
+
+# Generated server/client build output
+dist-server/
+
+# Mockup de diseño importado (referencia, no se commitea)
+design-import/
+.persona-docs/
+src-tauri/target/
+.tauri-bundle/
+src-tauri/binaries/*.exe
+src-tauri/binaries/*-x86_64-pc-windows-msvc
+src-tauri/binaries/*-aarch64-pc-windows-msvc

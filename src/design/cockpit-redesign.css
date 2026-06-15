@@ -1,0 +1,678 @@
+.cockpitShell {
+  display: grid;
+  grid-template-columns: 284px minmax(0, 1fr);
+  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
+  background: transparent;
+}
+
+.cockpitWorkspace {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.lumaSidebar {
+  position: relative;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+  min-height: 0;
+  padding: 18px 14px;
+  border-right: 1px solid var(--line-soft);
+  background: linear-gradient(180deg, rgba(13, 16, 34, 0.96), rgba(9, 11, 24, 0.96));
+  box-shadow: 18px 0 42px rgba(0, 0, 0, 0.26);
+}
+
+.sidebarBrand,
+.topbarHost,
+.yukoCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.brandStar,
+.topStatusIcon,
+.yukoAvatar {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(255, 111, 179, 0.32);
+  border-radius: var(--radius-md);
+  color: var(--sakura);
+  background: linear-gradient(135deg, rgba(255, 111, 179, 0.16), rgba(168, 137, 255, 0.12));
+}
+
+.sidebarBrandText,
+.topbarHost > div,
+.yukoCard > div {
+  min-width: 0;
+}
+
+.sidebarBrand strong,
+.topbarHost strong,
+.yukoCard strong {
+  display: block;
+  overflow: hidden;
+  color: var(--text-strong);
+  font-family: var(--font-display);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebarBrand span,
+.topbarHost small,
+.yukoCard span {
+  display: block;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.sidebarNav {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.sidebarGroup {
+  display: grid;
+  gap: 6px;
+}
+
+.sidebarGroupLabel {
+  padding: 0 10px;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sidebarNav button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 10px 11px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  background: transparent;
+  text-align: left;
+  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.sidebarNav button:hover,
+.sidebarNav button.active {
+  border-color: rgba(255, 111, 179, 0.22);
+  color: var(--text-strong);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.sidebarNav button.active {
+  box-shadow: inset 3px 0 0 var(--sakura), 0 10px 26px rgba(255, 111, 179, 0.1);
+}
+
+/* Override de mayor especificidad: el CSS heredado define
+   `.sidebarNav button span { display: grid; width: 22px }` (era para iconos de
+   un solo caracter). El nuevo label vive en un span dentro del boton, asi que
+   hay que devolverlo a ancho natural para que no se recorte el texto. */
+.lumaSidebar .sidebarNav button .sidebarLabel {
+  display: block;
+  width: auto;
+  place-items: initial;
+  color: inherit;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebarCore {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.sidebarCore > span,
+.sidebarCore > small {
+  overflow: hidden;
+  color: var(--text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebarCore > strong {
+  color: var(--text-strong);
+}
+
+.sidebarCore.on {
+  border-color: rgba(105, 240, 207, 0.25);
+}
+
+.sidebarCore.warn {
+  border-color: rgba(255, 208, 111, 0.28);
+}
+
+.cockpitTopbar {
+  display: grid;
+  /* En escritorio el boton hamburguesa esta oculto (display:none), asi que solo
+     hay 3 hijos visibles: host, riel de estado y acciones. El grid debe ser de 3
+     columnas para que el riel de estado tome el espacio flexible (1fr) y no caiga
+     en una columna estrecha. El hamburguesa solo aparece en movil (ver media
+     queries), donde el grid se redefine. */
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  min-width: 0;
+  padding: 14px clamp(14px, 2vw, 24px);
+  border-bottom: 1px solid var(--line-soft);
+  background: rgba(8, 10, 23, 0.74);
+  backdrop-filter: blur(18px);
+}
+
+.sidebarToggle {
+  display: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  color: var(--text-strong);
+  background: var(--surface-1);
+}
+
+.topStatusRail {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.topStatusCard {
+  display: flex;
+  flex: 1 0 148px;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  max-width: 220px;
+  padding: 9px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.topStatusCard strong,
+.topStatusCard small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topStatusCard strong {
+  color: var(--text-strong);
+  font-size: 0.78rem;
+}
+
+.topStatusCard small {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+.topStatusCard.ok .topStatusIcon { color: var(--ok); border-color: rgba(105, 240, 207, 0.26); }
+.topStatusCard.warn .topStatusIcon { color: var(--warning); border-color: rgba(255, 208, 111, 0.28); }
+.topStatusCard.error .topStatusIcon { color: var(--danger); border-color: rgba(255, 111, 134, 0.28); }
+.topStatusCard.twitch .topStatusIcon { color: var(--lavender); border-color: rgba(168, 137, 255, 0.28); }
+
+.cockpitActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+
+.shutdownButton,
+.cancelShutdown {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 38px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+
+.dashboardGrid.cockpitGrid {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  padding: clamp(12px, 2vw, 22px);
+}
+
+.dashboardGrid.section-live {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.95fr) minmax(340px, 1.18fr) minmax(280px, 0.82fr);
+  gap: clamp(12px, 1.5vw, 18px);
+  align-items: stretch;
+}
+
+.dashboardGrid:not(.section-live) {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.92fr) minmax(340px, 1.18fr) minmax(320px, 1fr);
+  gap: clamp(12px, 1.5vw, 18px);
+}
+
+.heroPanel,
+.chatPanel,
+.controlPanel,
+.cockpitCard,
+.consoleCard,
+.livePreviewCard {
+  min-width: 0;
+  min-height: 0;
+  border-color: var(--line-soft);
+  border-radius: var(--radius-lg);
+  background: var(--surface-0);
+  box-shadow: var(--shadow-card);
+}
+
+.heroPanel,
+.chatPanel,
+.controlPanel {
+  overflow: hidden;
+}
+
+.chatPanel,
+.controlPanel {
+  display: flex;
+  flex-direction: column;
+}
+
+.controlPanel,
+.messages,
+.sidebarNav {
+  scrollbar-color: rgba(255, 111, 179, 0.42) transparent;
+  scrollbar-width: thin;
+}
+
+.controlPanel {
+  overflow-y: auto;
+}
+
+.operatorPanel {
+  min-width: 0;
+}
+
+.panelHeader,
+.heroHeader,
+.heroActions,
+.panelActions,
+.composerActions,
+.visualNarratorActions,
+.streamActions,
+.buttonGrid,
+.modelLoadStatus {
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.panelTitle,
+.panelTitle > div,
+.operatorHeader,
+.composerField,
+.streamSearchRow,
+.voiceBackendSwitch,
+.chatModeBar {
+  min-width: 0;
+}
+
+.panelTitle h2,
+.operatorHeader span,
+.operatorHeader strong,
+.statusMetric strong,
+.streamStatus dd,
+.messageMeta small,
+.sceneHint,
+.muted {
+  overflow-wrap: anywhere;
+}
+
+.avatarFrame {
+  width: 100%;
+  min-width: 0;
+  aspect-ratio: 16 / 10;
+  max-height: min(42vh, 420px);
+}
+
+.chatPanel .messages {
+  flex: 1 1 auto;
+  min-height: 220px;
+  overflow: auto;
+}
+
+.chatComposer,
+.attachedImagePreview,
+.streamUserField,
+.composerField,
+.composerActions {
+  min-width: 0;
+}
+
+.composerField input,
+.streamSearchRow input,
+.streamUserField input,
+label input,
+label select,
+label textarea {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Dropdowns legibles: el navegador pintaba los <select>/<option> en gris claro
+   con texto blanco (ilegible sobre el tema oscuro). Forzamos fondo oscuro y texto
+   claro, tanto en la caja cerrada como en la lista desplegada. Aplica a todos los
+   menus desplegables del cockpit, no solo al de modelos. */
+.cockpitShell select,
+.cockpitWorkspace select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: #161a30;
+  color: #ece9ff;
+  border: 1px solid var(--line-soft, rgba(255, 255, 255, 0.12));
+  border-radius: var(--radius-sm, 10px);
+  padding: 9px 34px 9px 12px;
+  cursor: pointer;
+  /* flecha custom para que no dependa del estilo nativo gris */
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' fill='none' stroke='%23b9b4e0' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+.cockpitShell select:hover,
+.cockpitWorkspace select:hover {
+  border-color: rgba(255, 111, 179, 0.4);
+}
+
+/* Los items de la lista desplegada (los pinta el navegador): fondo oscuro y texto
+   claro para que se lean bien. */
+.cockpitShell select option,
+.cockpitWorkspace select option,
+.cockpitShell option {
+  background-color: #161a30;
+  color: #ece9ff;
+}
+
+.cockpitShell select option:checked,
+.cockpitShell select option:hover {
+  background-color: #2a2046;
+  color: #ffffff;
+}
+
+.toolButton,
+.glassIconButton {
+  display: inline-grid;
+  place-items: center;
+}
+
+.routeButton,
+.heroUpload,
+.primaryAction,
+.secondary,
+button {
+  max-width: 100%;
+}
+
+.streamIntegrationCard,
+.memoryItem,
+.guardItem,
+.voiceChoicePanel,
+.referenceControls,
+.personaModePanel {
+  min-width: 0;
+  border-radius: var(--radius-md);
+}
+
+.visualNarratorPreview,
+.messageImageButton,
+.messageImage img {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.modelLoadStatus {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(138px, 1fr));
+}
+
+.sidebarScrim {
+  display: none;
+}
+
+@media (max-width: 1380px) {
+  .dashboardGrid.section-live {
+    grid-template-columns: minmax(280px, 0.92fr) minmax(340px, 1.08fr);
+  }
+
+  .dashboardGrid.section-live .operatorPanel {
+    grid-column: 1 / -1;
+    max-height: 42vh;
+  }
+
+  .dashboardGrid:not(.section-live) {
+    grid-template-columns: minmax(280px, 0.9fr) minmax(340px, 1.1fr);
+  }
+
+  .dashboardGrid:not(.section-live) .operatorPanel {
+    grid-column: 1 / -1;
+    max-height: 46vh;
+  }
+}
+
+@media (max-width: 1024px) {
+  .cockpitShell {
+    grid-template-columns: 76px minmax(0, 1fr);
+  }
+
+  .lumaSidebar {
+    padding: 14px 10px;
+  }
+
+  .sidebarBrand {
+    justify-content: center;
+  }
+
+  .sidebarBrandText,
+  .sidebarGroupLabel,
+  .sidebarLabel,
+  .sidebarCore > span,
+  .sidebarCore > strong,
+  .sidebarCore > small,
+  .sidebarCore .yukoCard > div {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .sidebarNav button {
+    justify-content: center;
+    padding: 10px;
+  }
+
+  .sidebarCore {
+    justify-items: center;
+    padding: 10px 7px;
+  }
+
+  .cockpitTopbar {
+    grid-template-columns: minmax(0, 190px) minmax(0, 1fr) auto;
+  }
+
+  .sidebarToggle {
+    display: none;
+  }
+
+  .topbarHost {
+    grid-column: 1;
+  }
+
+  .topStatusRail {
+    grid-column: 2;
+  }
+
+  .cockpitActions {
+    grid-column: 3;
+  }
+}
+
+@media (max-width: 920px) {
+  .dashboardGrid.section-live,
+  .dashboardGrid:not(.section-live) {
+    grid-template-columns: minmax(0, 1fr);
+    overflow-y: auto;
+  }
+
+  .dashboardGrid.section-live .operatorPanel,
+  .dashboardGrid:not(.section-live) .operatorPanel {
+    grid-column: auto;
+    max-height: none;
+  }
+
+  .avatarFrame {
+    max-height: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .cockpitShell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lumaSidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: min(84vw, 302px);
+    transform: translateX(-105%);
+    transition: transform 180ms var(--ease-standard);
+  }
+
+  .lumaSidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .sidebarBrand {
+    justify-content: flex-start;
+  }
+
+  .sidebarBrandText,
+  .sidebarGroupLabel,
+  .sidebarLabel,
+  .sidebarCore > span,
+  .sidebarCore > strong,
+  .sidebarCore > small,
+  .sidebarCore .yukoCard > div {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+  }
+
+  .sidebarNav button {
+    justify-content: flex-start;
+  }
+
+  .sidebarCore {
+    justify-items: stretch;
+  }
+
+  .sidebarScrim.visible {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    display: block;
+    border: 0;
+    background: rgba(0, 0, 0, 0.48);
+  }
+
+  .cockpitTopbar {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: start;
+  }
+
+  .sidebarToggle {
+    display: grid;
+  }
+
+  .topbarHost {
+    grid-column: 2;
+  }
+
+  .topStatusRail {
+    grid-column: 1 / -1;
+    order: 4;
+  }
+
+  .cockpitActions {
+    grid-column: 3;
+  }
+
+  .topStatusCard {
+    flex-basis: 142px;
+  }
+
+  .dashboardGrid.cockpitGrid {
+    padding: 10px;
+  }
+
+  .panelHeader,
+  .operatorHeader,
+  .composerActions {
+    align-items: stretch;
+  }
+
+  .composerActions > * {
+    flex: 1 1 auto;
+  }
+
+  .sendButton {
+    min-width: 118px;
+  }
+}
+
+@media (max-height: 720px) and (min-width: 921px) {
+  .avatarFrame {
+    max-height: 34vh;
+  }
+
+  .readyItems {
+    max-height: 150px;
+    overflow: auto;
+  }
+}

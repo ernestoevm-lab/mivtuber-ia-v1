@@ -1,0 +1,535 @@
+/* =========================================================
+   MiVtuberIA — Capa de armonización v1.0 (comercial)
+   Aplica el sistema "cyber-kawaii" (tokens.css + ui.css) a TODAS las pestañas
+   que aún usan el cockpit antiguo. Scoped a :not(.section-live) para no tocar Live.
+   Solo estilos: no cambia estructura ni lógica. Objetivo: consistencia visual,
+   buen contraste y que el header de sección no tape el contenido.
+   ========================================================= */
+
+/* ---------- Panel central de cada pestaña ---------- */
+.cockpitGrid.dashboardGrid:not(.section-live) > .operatorPanel.controlPanel {
+  width: min(1120px, 100%);
+  gap: var(--s-4);
+  padding: var(--s-5);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  background:
+    linear-gradient(180deg, rgba(177, 155, 232, 0.05), rgba(244, 166, 200, 0.02)),
+    var(--surface-1);
+  box-shadow: var(--sh-3);
+}
+
+/* ---------- Header de sección: fondo SÓLIDO para que no se transparente ---------- */
+.cockpitGrid.dashboardGrid:not(.section-live) .operatorHeader {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin: calc(var(--s-5) * -1) calc(var(--s-5) * -1) 0;
+  padding: var(--s-4) var(--s-5);
+  border-bottom: 1px solid var(--line);
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  /* !important vence al gradiente !important del tema viejo, que dejaba el header
+     translúcido y transparentaba el contenido al hacer scroll. */
+  background: var(--surface-1) !important;
+  backdrop-filter: none;
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) .operatorHeader span {
+  color: var(--text-hi);
+  font-family: var(--font-display);
+  font-size: var(--t-xl);
+  font-weight: var(--w-sem);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) .operatorHeader strong {
+  color: var(--text-mid);
+  font-family: var(--font-mono);
+  font-size: var(--t-2xs);
+  font-weight: var(--w-med);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) .controlTabBody {
+  display: grid;
+  gap: var(--s-4);
+  padding-top: var(--s-2);
+  overflow: auto;
+  /* Las tarjetas conservan su altura natural: sin esto, una pestaña con una sola
+     tarjeta la estiraba a todo el alto dejando un hueco vacío gigante dentro. */
+  align-content: start;
+  /* CRÍTICO para el scroll de las pestañas: una regla responsive fija la primera fila
+     a la altura visible (1fr); como .tabCard recorta overflow, el contenido excedente
+     quedaba AMPUTADO sin scroll (Escena perdía ~1400px). Con filas en max-content la
+     tarjeta crece a su contenido y ESTE contenedor es quien scrollea. */
+  grid-template-rows: none;
+  grid-auto-rows: max-content;
+}
+
+/* ---------- Tarjetas (.tabCard) ---------- */
+.cockpitGrid.dashboardGrid:not(.section-live) .tabCard {
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background:
+    linear-gradient(180deg, rgba(177, 155, 232, 0.045), rgba(244, 166, 200, 0.02)),
+    var(--surface-2);
+  box-shadow: var(--sh-2);
+  overflow: hidden;
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) .tabCardHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-4) var(--s-4) var(--s-3);
+  border-bottom: 1px solid var(--line-soft);
+  /* vence el gradiente !important viejo para que el header tome la superficie de la tarjeta */
+  background: transparent !important;
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) .tabCardHeader h2 {
+  margin: 0;
+  color: var(--text-hi);
+  font-family: var(--font-display);
+  font-size: var(--t-lg);
+  font-weight: var(--w-sem);
+}
+
+/* El ícono de una letra se vuelve un chip intencional con gradiente */
+.cockpitGrid.dashboardGrid:not(.section-live) .accordionIcon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  border-radius: var(--r-sm);
+  background: linear-gradient(135deg, var(--sakura-soft), var(--lavender-soft));
+  border: 1px solid var(--line-accent);
+  color: var(--sakura-hi);
+  font-family: var(--font-display);
+  font-size: var(--t-sm);
+  font-weight: var(--w-bld);
+  text-transform: uppercase;
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) .tabCardBody {
+  display: grid;
+  gap: var(--s-3);
+  padding: var(--s-4);
+}
+
+/* ---------- Texto auxiliar legible ---------- */
+.cockpitGrid.dashboardGrid:not(.section-live) .sceneHint,
+.cockpitGrid.dashboardGrid:not(.section-live) .safetyExplainer,
+.cockpitGrid.dashboardGrid:not(.section-live) .voiceInfo {
+  color: var(--text-mid);
+  font-size: var(--t-sm);
+  line-height: var(--lh-snug);
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) .muted {
+  color: var(--text-lo);
+  font-size: var(--t-sm);
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) label {
+  color: var(--text);
+  font-size: var(--t-sm);
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) h3,
+.cockpitGrid.dashboardGrid:not(.section-live) h4,
+.cockpitGrid.dashboardGrid:not(.section-live) strong {
+  color: var(--text-hi);
+}
+
+/* ---------- Inputs / selects / textareas ---------- */
+.cockpitGrid.dashboardGrid:not(.section-live) input[type="text"],
+.cockpitGrid.dashboardGrid:not(.section-live) input[type="number"],
+.cockpitGrid.dashboardGrid:not(.section-live) input[type="search"],
+.cockpitGrid.dashboardGrid:not(.section-live) input:not([type]),
+.cockpitGrid.dashboardGrid:not(.section-live) select,
+.cockpitGrid.dashboardGrid:not(.section-live) textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-inset);
+  color: var(--text-hi);
+  font-family: var(--font-ui);
+  font-size: var(--t-sm);
+  padding: 10px 12px;
+  transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) textarea {
+  min-height: 76px;
+  resize: vertical;
+  line-height: var(--lh-snug);
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) input::placeholder,
+.cockpitGrid.dashboardGrid:not(.section-live) textarea::placeholder {
+  color: var(--text-lo);
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) input:focus-visible,
+.cockpitGrid.dashboardGrid:not(.section-live) select:focus-visible,
+.cockpitGrid.dashboardGrid:not(.section-live) textarea:focus-visible {
+  outline: none;
+  border-color: var(--line-accent);
+  box-shadow: 0 0 0 3px var(--sakura-soft);
+}
+
+/* select: flecha custom legible */
+.cockpitGrid.dashboardGrid:not(.section-live) select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--text-mid) 50%),
+    linear-gradient(135deg, var(--text-mid) 50%, transparent 50%);
+  background-position: calc(100% - 18px) center, calc(100% - 13px) center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 34px;
+  cursor: pointer;
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) select option {
+  background: var(--surface-2);
+  color: var(--text-hi);
+}
+
+/* ---------- Botones ---------- */
+.cockpitGrid.dashboardGrid:not(.section-live) button {
+  font-family: var(--font-ui);
+  transition: transform var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) button:active {
+  transform: translateY(1px);
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) button.secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-3);
+  color: var(--text-hi);
+  font-size: var(--t-sm);
+  font-weight: var(--w-med);
+  padding: 9px 14px;
+  cursor: pointer;
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) button.secondary:hover {
+  background: var(--surface-4);
+  border-color: var(--line-strong);
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) button.primaryAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  background: linear-gradient(135deg, var(--sakura), var(--lavender));
+  color: var(--text-on-accent);
+  font-size: var(--t-sm);
+  font-weight: var(--w-sem);
+  padding: 9px 16px;
+  cursor: pointer;
+  box-shadow: var(--sh-glow-sakura);
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) button.primaryAction:hover {
+  filter: brightness(1.05);
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) button.danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  border: 1px solid var(--err-soft);
+  border-radius: var(--r-md);
+  background: var(--err-soft);
+  color: var(--err);
+  font-size: var(--t-sm);
+  font-weight: var(--w-med);
+  padding: 9px 14px;
+  cursor: pointer;
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) button.danger:hover {
+  background: rgba(240, 138, 168, 0.26);
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) .buttonGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+/* ---------- Segmented (selectores tipo pestaña) ---------- */
+.cockpitGrid.dashboardGrid:not(.section-live) .segmented {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-inset);
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) .segmented button {
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-mid);
+  font-size: var(--t-sm);
+  font-weight: var(--w-med);
+  padding: 7px 14px;
+  cursor: pointer;
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) .segmented button:hover {
+  color: var(--text-hi);
+  background: var(--surface-3);
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) .segmented button.active {
+  background: linear-gradient(135deg, var(--sakura-soft), var(--lavender-soft));
+  color: var(--text-hi);
+  box-shadow: inset 0 0 0 1px var(--line-accent);
+}
+
+/* ---------- Tarjetas internas frecuentes ---------- */
+.cockpitGrid.dashboardGrid:not(.section-live) .streamIntegrationCard,
+.cockpitGrid.dashboardGrid:not(.section-live) .memoryItem,
+.cockpitGrid.dashboardGrid:not(.section-live) .voiceChoicePanel,
+.cockpitGrid.dashboardGrid:not(.section-live) .personaModePanel,
+.cockpitGrid.dashboardGrid:not(.section-live) .streamHistoryItem,
+.cockpitGrid.dashboardGrid:not(.section-live) .guardItem {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-inset);
+  padding: var(--s-3);
+}
+
+/* Métricas/estado en cuadrícula */
+.cockpitGrid.dashboardGrid:not(.section-live) .modelLoadStatus,
+.cockpitGrid.dashboardGrid:not(.section-live) .voiceStatusGrid,
+.cockpitGrid.dashboardGrid:not(.section-live) .streamStatus {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--s-2);
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) .runtimeStatus {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  color: var(--text-mid);
+  font-size: var(--t-sm);
+}
+
+/* dot de estado */
+.cockpitGrid.dashboardGrid:not(.section-live) .runtimeStatus .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--off);
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) .runtimeStatus .dot.on {
+  background: var(--ok);
+  box-shadow: 0 0 8px var(--ok);
+}
+
+/* Avisos */
+.cockpitGrid.dashboardGrid:not(.section-live) .chatNotice,
+.cockpitGrid.dashboardGrid:not(.section-live) .streamNotice {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--info-soft);
+  color: var(--text);
+  font-size: var(--t-sm);
+  padding: 9px 12px;
+}
+
+/* Enlaces tipo botón (viewer, etc.) */
+.cockpitGrid.dashboardGrid:not(.section-live) .viewerLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-3);
+  color: var(--text-hi);
+  font-size: var(--t-sm);
+  font-weight: var(--w-med);
+  padding: 9px 14px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) .viewerLink:hover {
+  background: var(--surface-4);
+}
+
+/* Subir archivo */
+.cockpitGrid.dashboardGrid:not(.section-live) .heroUpload {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  color: var(--text);
+}
+
+/* ---------- Lista de voces: distinguir "en uso" (verde) de "seleccionada" (contorno) ---------- */
+.cockpitGrid.dashboardGrid:not(.section-live) .voiceChoiceList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--s-2);
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) .voiceChoiceList button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-inset);
+  color: var(--text);
+  padding: 9px 12px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) .voiceChoiceList button span {
+  color: var(--text-hi);
+  font-size: var(--t-sm);
+  font-weight: var(--w-med);
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) .voiceChoiceList button small {
+  color: var(--text-mid);
+  font-family: var(--font-mono);
+  font-size: var(--t-2xs);
+}
+
+/* Seleccionada para probar/guardar: contorno lavanda (NO "encendida") */
+.cockpitGrid.dashboardGrid:not(.section-live) .voiceChoiceList button.active {
+  border-color: var(--lavender);
+  box-shadow: inset 0 0 0 1px var(--lavender), var(--sh-glow-lavender);
+  background: var(--lavender-soft);
+}
+
+/* En uso real por Yuko: verde. Es la única que debe verse "activa". */
+.cockpitGrid.dashboardGrid:not(.section-live) .voiceChoiceList button.inUse {
+  border-color: var(--ok);
+  background: var(--ok-soft);
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) .voiceChoiceList button.inUse small {
+  color: var(--ok);
+}
+
+/* ---------- Logs: registro tipo terminal legible (no volcado amontonado) ---------- */
+.cockpitGrid.dashboardGrid:not(.section-live) .logs {
+  display: flex;
+  flex-direction: column;
+  max-height: 60vh;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-inset);
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) .logs code {
+  display: block;
+  padding: 7px var(--s-3);
+  border-bottom: 1px solid var(--line-soft);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  line-height: var(--lh-snug);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) .logs code:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) .logs code:hover {
+  background: var(--surface-3);
+  color: var(--text-hi);
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) .logs code:last-child {
+  border-bottom: 0;
+}
+
+/* ---------- Sliders (range) con acento del tema ---------- */
+.cockpitGrid.dashboardGrid:not(.section-live) input[type="range"] {
+  width: 100%;
+  accent-color: var(--sakura);
+  cursor: pointer;
+}
+
+/* ---------- Input de archivo: botón legible (no el gris nativo del SO) ---------- */
+.cockpitGrid.dashboardGrid:not(.section-live) input[type="file"] {
+  width: 100%;
+  color: var(--text-mid);
+  font-size: var(--t-sm);
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) input[type="file"]::file-selector-button {
+  margin-right: var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-3);
+  color: var(--text-hi);
+  font-family: var(--font-ui);
+  font-size: var(--t-sm);
+  font-weight: var(--w-med);
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) input[type="file"]::file-selector-button:hover {
+  background: var(--surface-4);
+}
+
+/* ---------- Scrollbar fino y acorde ---------- */
+.cockpitGrid.dashboardGrid:not(.section-live) .operatorPanel.controlPanel::-webkit-scrollbar,
+.cockpitGrid.dashboardGrid:not(.section-live) .controlTabBody::-webkit-scrollbar {
+  width: 10px;
+}
+
+.cockpitGrid.dashboardGrid:not(.section-live) .operatorPanel.controlPanel::-webkit-scrollbar-thumb,
+.cockpitGrid.dashboardGrid:not(.section-live) .controlTabBody::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: var(--r-pill);
+  background-clip: padding-box;
+  background-color: var(--surface-4);
+}
