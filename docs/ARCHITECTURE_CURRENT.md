@@ -436,3 +436,54 @@ Compatibilidad:
 - Twitch, YouTube Live y Kick todavia no estan implementados.
 - No se agregaron tablas SQLite.
 - LM Studio sigue siendo el proveedor LLM principal actual y Ollama fallback opcional.
+
+## Actualizacion 2026-06-15 - Estado real (corrige secciones previas desactualizadas)
+
+Las secciones de arriba (auditoria 2026-04-29) quedaron obsoletas en varios puntos. El
+estado REAL del codigo hoy es:
+
+### Persistencia (corrige "SQLite via scripts/sqlite_store.py")
+- NO hay Python para la base de datos. `server/db.ts` usa **better-sqlite3 nativo**
+  (sincrono), DB en `data/vtuber.sqlite` (WAL). El esquema se crea/migra en `initSchema()`
+  con `ensureColumn()` idempotente.
+- Tablas reales: `messages`, `memories`, `blocked_events`, `moderation_events`,
+  **`chat_users`**, **`chat_messages`**, **`llm_traces`** (estas tres ya existen, al
+  contrario de lo que decia la seccion vieja).
+
+### Integraciones de stream (corrige "no contiene Twitch/TikFinity")
+- **Twitch read-only**: `server/integrations/twitch/` (adapter + normalizador). Se habilita
+  cuando las 3 credenciales TWITCH_* estan completas.
+- **TikFinity**: `server/integrations/tikfinity/` (cliente WS + normalizador) alimenta al
+  director de autonomia.
+- **VTube Studio**: `server/integrations/vtubeStudio/vtsClient.ts` (emocion + lipsync).
+
+### Cerebro LLM (corrige "server/ollama.ts solo LM Studio/Ollama")
+- `server/ollama.ts` orquesta varios proveedores via `callPreferredLocalModel()`:
+  - **LM Studio** (local), **Ollama** (local/fallback), **fallback** template.
+  - **Nube OpenAI-compatible**: **Gemini**, y desde 2026-06-15 tambien **OpenRouter**,
+    **DeepSeek** y **MiniMax**.
+- Hermes fue retirado por completo (cerebro, endpoints y el tipo de proveedor).
+- Los cerebros de nube comparten un unico cliente `callOpenAiCompatibleCloud`/
+  `postOpenAiCompatibleJson` (POST `{base}/chat/completions`, `Authorization: Bearer`).
+  **Solo se usan cuando el usuario los elige EXPLICITAMENTE**; nunca entran en la cadena
+  `auto`, para no gastar la cuota del usuario sin que lo pida.
+- Config por proveedor en `server/config.ts` (`{provider}BaseUrl`/`{provider}Model`), keys
+  en el `.env` del perfil (allowlist `SECRET_ENV_KEYS`). Defaults verificados contra docs
+  oficiales: OpenRouter `https://openrouter.ai/api/v1`, DeepSeek `https://api.deepseek.com`,
+  MiniMax `https://api.minimax.io/v1`.
+- Listado de modelos: `listCloudModels(provider)` consulta `GET {base}/models` en vivo para
+  Gemini/OpenRouter/DeepSeek; **MiniMax no expone ese endpoint**, asi que devuelve una lista
+  estatica (`MINIMAX_STATIC_MODELS`). Endpoint HTTP: `GET /api/llm/models?provider=...`
+  (y `GET /api/llm/gemini-models` se mantiene por compatibilidad).
+
+### Capsula de escritorio (no existia en la auditoria vieja)
+- `src-tauri/` (Tauri v2): supervisa un sidecar Node, elige puerto disponible con failover
+  (8787 -> 17787 -> ...), healthcheck en hilo aparte, apagado limpio. El frontend descubre
+  el puerto real via comando Rust `get_backend_port`.
+
+### Frontend (corrige "casi todo en App.tsx")
+- Las pestañas se extrajeron a `src/tabs/` (Scene, Avatar, Live, Persona, Voice, Model,
+  Viewers, Memory, Logs, Safety, Settings). `src/App.tsx` conserva estado raiz + handlers
+  y la columna central del Live (sigue siendo grande; ver plan de extraccion de hooks).
+- La seleccion de proveedor/modelo de nube vive en `src/tabs/ModelTab.tsx` (generico para
+  los 4 cerebros de nube); las API keys se administran tambien en `src/tabs/SettingsTab.tsx`.

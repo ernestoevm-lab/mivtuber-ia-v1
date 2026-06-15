@@ -11,7 +11,7 @@ import { db, initDb } from "./db.js";
 import { listLocalModels, selectLmStudioModel, unloadAllLocalModels, useActiveLmStudioModel } from "./localModels.js";
 import { ModerationResult, moderateMessage, normalizeForModeration } from "./moderation.js";
 // Legacy name: this routes to the configured local LLM provider, usually LM Studio.
-import { askLocalLlm, clearLmStudioEndpointCache, detectLmStudioApi, detectLmStudioInferenceEndpoint, getLmStudioEffectiveSettings, getLlmDiagnostics, isSmallLocalModel, listGeminiModels } from "./ollama.js";
+import { askLocalLlm, clearLmStudioEndpointCache, detectLmStudioApi, detectLmStudioInferenceEndpoint, getLmStudioEffectiveSettings, getLlmDiagnostics, isSmallLocalModel, listCloudModels, listGeminiModels } from "./ollama.js";
 import type { LlmResponse } from "./ollama.js";
 import { maybeCompactConversationContext } from "./contextCompactor.js";
 import { maybeExtractMemory, searchRelevantMemories } from "./memory.js";
@@ -162,6 +162,12 @@ app.get("/api/status", async (_req, res) => {
       lmStudioModel: runtime.lmStudioModel,
       geminiModel: runtime.geminiModel,
       geminiBaseUrl: runtime.geminiBaseUrl,
+      openrouterModel: runtime.openrouterModel,
+      openrouterBaseUrl: runtime.openrouterBaseUrl,
+      deepseekModel: runtime.deepseekModel,
+      deepseekBaseUrl: runtime.deepseekBaseUrl,
+      minimaxModel: runtime.minimaxModel,
+      minimaxBaseUrl: runtime.minimaxBaseUrl,
       lmStudioContextLength: runtime.lmStudioContextLength,
       lmStudioGpuOffload: runtime.lmStudioGpuOffload,
       lmStudioTtl: runtime.lmStudioTtl,
@@ -273,6 +279,18 @@ app.get("/api/models", async (_req, res) => {
 
 app.get("/api/llm/gemini-models", async (_req, res) => {
   const result = await listGeminiModels();
+  res.json(result);
+});
+
+// Listado de modelos para cualquier cerebro de nube (Gemini/OpenRouter/DeepSeek/MiniMax).
+// OpenRouter/DeepSeek/Gemini consultan su /models en vivo; MiniMax devuelve lista estatica.
+app.get("/api/llm/models", async (req, res) => {
+  const provider = String(req.query.provider || "gemini").toLowerCase();
+  if (provider !== "gemini" && provider !== "openrouter" && provider !== "deepseek" && provider !== "minimax") {
+    res.status(400).json({ ok: false, models: [], error: `Proveedor de nube no soportado: ${provider}` });
+    return;
+  }
+  const result = await listCloudModels(provider);
   res.json(result);
 });
 
@@ -438,6 +456,12 @@ app.post("/api/runtime", (req, res) => {
     lmStudioTtl: string;
     geminiModel: string;
     geminiBaseUrl: string;
+    openrouterModel: string;
+    openrouterBaseUrl: string;
+    deepseekModel: string;
+    deepseekBaseUrl: string;
+    minimaxModel: string;
+    minimaxBaseUrl: string;
     llmMaxTokens: number;
     llmLiveMaxTokens: number;
     llmAdminMaxTokens: number;
@@ -468,6 +492,12 @@ app.post("/api/runtime", (req, res) => {
     lmStudioTtl: body.lmStudioTtl,
     geminiModel: body.geminiModel,
     geminiBaseUrl: body.geminiBaseUrl,
+    openrouterModel: body.openrouterModel,
+    openrouterBaseUrl: body.openrouterBaseUrl,
+    deepseekModel: body.deepseekModel,
+    deepseekBaseUrl: body.deepseekBaseUrl,
+    minimaxModel: body.minimaxModel,
+    minimaxBaseUrl: body.minimaxBaseUrl,
     llmMaxTokens: body.llmMaxTokens,
     llmLiveMaxTokens: body.llmLiveMaxTokens,
     llmAdminMaxTokens: body.llmAdminMaxTokens,

@@ -102,7 +102,7 @@ export interface ChatResponse {
   structuredSource?: "structured" | "legacy_text_fallback";
   action: "speak" | "blocked" | "draft" | "silent" | "ignored";
   approved: boolean;
-  provider: "lmstudio" | "ollama" | "hermes" | "gemini" | "fallback";
+  provider: "lmstudio" | "ollama" | "gemini" | "openrouter" | "deepseek" | "minimax" | "fallback";
   model: string;
   timings: ChatResponseTimings;
   ttsPending?: boolean;

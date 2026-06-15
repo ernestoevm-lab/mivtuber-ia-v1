@@ -214,6 +214,10 @@ export async function getGeminiModels(): Promise<{ ok: boolean; models: string[]
   return request("/api/llm/gemini-models");
 }
 
+export async function getCloudModels(provider: string): Promise<{ ok: boolean; models: string[]; error?: string }> {
+  return request(`/api/llm/models?provider=${encodeURIComponent(provider)}`);
+}
+
 export interface VtsStatusPayload {
   enabled: boolean;
   connected: boolean;

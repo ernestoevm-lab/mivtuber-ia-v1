@@ -24,19 +24,19 @@ const providerSecretFields: Array<{ key: SecretKey; label: string; placeholder: 
     key: "OPENROUTER_API_KEY",
     label: "OpenRouter API key",
     placeholder: "sk-or-...",
-    note: "Guardada para habilitar proveedor OpenRouter cuando el backend lo conecte."
+    note: "Cerebro de nube (OpenAI-compatible). Actívalo eligiéndolo en la pestaña Modelo."
   },
   {
     key: "DEEPSEEK_API_KEY",
     label: "DeepSeek API key",
     placeholder: "sk-...",
-    note: "Guardada localmente para el proveedor DeepSeek."
+    note: "Cerebro de nube (OpenAI-compatible). Actívalo eligiéndolo en la pestaña Modelo."
   },
   {
     key: "MINIMAX_API_KEY",
     label: "MiniMax API key",
     placeholder: "MiniMax key",
-    note: "Guardada localmente para voz/modelos MiniMax cuando se active ese flujo."
+    note: "Cerebro de nube. Actívalo en la pestaña Modelo (lista de modelos fija)."
   }
 ];
 

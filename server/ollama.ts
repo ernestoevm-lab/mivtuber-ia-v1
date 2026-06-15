@@ -29,7 +29,7 @@ export interface LmStudioEndpoint {
 
 export interface LlmResponse {
   text: string;
-  provider: "lmstudio" | "ollama" | "hermes" | "gemini" | "fallback";
+  provider: "lmstudio" | "ollama" | "gemini" | "openrouter" | "deepseek" | "minimax" | "fallback";
   model: string;
   reasoningContent: string | null;
   hadReasoning: boolean;
@@ -151,26 +151,33 @@ export async function askOllama(
 // Legacy name: this routes to the configured local LLM provider, usually LM Studio.
 export const askLocalLlm = askOllama;
 
+type CloudProvider = "gemini" | "openrouter" | "deepseek" | "minimax";
+type ResolvedProvider = "lmstudio" | "ollama" | CloudProvider;
+
 async function callPreferredLocalModel(
   messages: LlmMessage[],
   originalUserMessage: string,
   requestContext: LlmRequestContext
-): Promise<LlmResponse & { provider: "lmstudio" | "ollama" | "hermes" | "gemini" }> {
+): Promise<LlmResponse & { provider: ResolvedProvider }> {
   // Hermes retirado del flujo del cerebro: su perfil neutralizaba la personalidad de
   // Yuko a proposito y anadia sobrecarga de WSL. Si alguna config vieja quedo en "hermes",
   // se trata como "lmstudio" para que la respuesta siga saliendo con personalidad.
   const rawProvider = runtime.llmProvider.toLowerCase();
   const provider = rawProvider === "hermes" ? "lmstudio" : rawProvider;
   const attempts: Array<{
-    provider: "lmstudio" | "ollama" | "hermes" | "gemini";
-    run: () => Promise<LlmResponse & { provider: "lmstudio" | "ollama" | "hermes" | "gemini" }>;
+    provider: ResolvedProvider;
+    run: () => Promise<LlmResponse & { provider: ResolvedProvider }>;
   }> = [];
 
-  // Cerebro en la nube: Gemini Flash via su endpoint compatible con OpenAI. Util para
-  // jugar algo pesado sin gastar VRAM local. La API key se lee de
-  // process.env.GEMINI_API_KEY solo al llamar; nunca se guarda ni se transmite.
+  // Cerebros en la nube (Gemini/OpenRouter/DeepSeek/MiniMax): todos hablan el dialecto
+  // OpenAI-compatible, asi que comparten cliente. SOLO se usan cuando el usuario los elige
+  // EXPLICITAMENTE; nunca entran en la cadena "auto", para no gastar su cuota sin que lo
+  // pida. La API key se lee de process.env solo al llamar; nunca se guarda ni se transmite.
   if (provider === "gemini") {
     attempts.push({ provider: "gemini", run: () => callGeminiCloud(messages, originalUserMessage, requestContext) });
+  }
+  if (provider === "openrouter" || provider === "deepseek" || provider === "minimax") {
+    attempts.push({ provider, run: () => callCloudProvider(provider, messages, originalUserMessage, requestContext) });
   }
   if (provider === "auto" || provider === "lmstudio") {
     attempts.push({ provider: "lmstudio", run: () => callLmStudio(messages, originalUserMessage, requestContext) });
@@ -188,15 +195,6 @@ async function callPreferredLocalModel(
       return await attempt.run();
     } catch (error) {
       lastError = error;
-      if (attempt.provider === "hermes") {
-        recordLlmError({
-          provider: "hermes",
-          model: runtime.lmStudioModel,
-          endpoint: "wsl:yuko",
-          apiMode: "hermes-cli",
-          error: error instanceof Error ? error.message : String(error)
-        });
-      }
     }
   }
   throw lastError instanceof Error ? lastError : new Error("No local LLM provider available");
@@ -268,13 +266,13 @@ async function callGeminiCloud(
     // Endpoint compatible con OpenAI de Gemini. Cuerpo limpio (sin reasoning_effort ni
     // stop sequences de LM Studio). Las imagenes ya viajan como content blocks OpenAI,
     // asi que la vision multimodal funciona sin cambios extra.
-    const json = await postGeminiJson(chatUrl, apiKey, {
+    const json = await postOpenAiCompatibleJson(chatUrl, apiKey, {
       model,
       messages,
       temperature: 0.7,
       max_tokens: maxTokens,
       stream: false
-    }, 60000);
+    }, 60000, "Gemini");
     const llmHttpMs = Date.now() - llmHttpStarted;
     const extracted = extractLlmResponse(json, { requestedModel: model, apiMode: "openai" });
     const finalContent = sanitizeFinalContent(extracted.finalContent || "");
@@ -298,41 +296,135 @@ async function callGeminiCloud(
   }
 }
 
-async function postGeminiJson(chatUrl: string, apiKey: string, body: Record<string, unknown>, timeoutMs: number): Promise<Record<string, any>> {
+async function postOpenAiCompatibleJson(chatUrl: string, apiKey: string, body: Record<string, unknown>, timeoutMs: number, label = "LLM", extraHeaders: Record<string, string> = {}): Promise<Record<string, any>> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetch(chatUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}`, ...extraHeaders },
       body: JSON.stringify(body),
       signal: controller.signal
     });
     const raw = await response.text();
-    if (!response.ok) throw new Error(`Gemini HTTP ${response.status}: ${truncateRaw(raw)}`);
+    if (!response.ok) throw new Error(`${label} HTTP ${response.status}: ${truncateRaw(raw)}`);
     return safeJson(raw);
   } finally {
     clearTimeout(timeout);
   }
 }
 
-// Lista en vivo de modelos disponibles en Gemini (endpoint compatible OpenAI).
-// Se usa para poblar el dropdown de modelos cuando el proveedor es Gemini, sin
-// inventar nombres. La API key se lee de process.env solo aqui.
-export async function listGeminiModels(): Promise<{ ok: boolean; models: string[]; error?: string; status?: number }> {
-  const apiKey = String(process.env.GEMINI_API_KEY || "").trim();
-  if (!apiKey) return { ok: false, models: [], error: "Falta tu API key de Gemini. Configurala en la pestana Modelo." };
-  const modelsUrl = `${runtime.geminiBaseUrl.replace(/\/$/, "")}/models`;
+// Cerebros de nube extra (OpenRouter/DeepSeek/MiniMax). Todos exponen un endpoint
+// compatible con OpenAI ({base}/chat/completions, Bearer), igual que Gemini, asi que
+// reutilizan el mismo cliente. La API key se lee de process.env solo al llamar.
+// MiniMax no expone /models OpenAI-compatible; mantenemos los ids oficiales (case-sensitive,
+// segun platform.minimax.io). M3 primero por ser el mas actual y el default.
+const MINIMAX_STATIC_MODELS = ["MiniMax-M3", "MiniMax-M2.7", "MiniMax-M2.5", "MiniMax-M2.1", "MiniMax-M2"];
+
+interface CloudProviderConfig {
+  label: string;
+  baseUrl: string;
+  apiKey: string;
+  model: string;
+  apiKeyHint: string;
+  minOutputTokens?: number;
+  extraHeaders?: Record<string, string>;
+}
+
+function resolveCloudProviderConfig(provider: "openrouter" | "deepseek" | "minimax"): CloudProviderConfig {
+  switch (provider) {
+    case "openrouter":
+      return {
+        label: "OpenRouter",
+        baseUrl: runtime.openrouterBaseUrl,
+        apiKey: String(process.env.OPENROUTER_API_KEY || "").trim(),
+        model: runtime.openrouterModel,
+        apiKeyHint: "Falta tu API key de OpenRouter. Configurala en Ajustes para usar este cerebro en la nube.",
+        // Cabeceras opcionales que OpenRouter usa para rankings; no afectan la respuesta.
+        extraHeaders: { "HTTP-Referer": "https://github.com/ernestoevm-lab/mivtuber-ia-v1", "X-Title": "MiVtuberIA" }
+      };
+    case "deepseek":
+      return {
+        label: "DeepSeek",
+        baseUrl: runtime.deepseekBaseUrl,
+        apiKey: String(process.env.DEEPSEEK_API_KEY || "").trim(),
+        model: runtime.deepseekModel,
+        apiKeyHint: "Falta tu API key de DeepSeek. Configurala en Ajustes para usar este cerebro en la nube."
+      };
+    case "minimax":
+      return {
+        label: "MiniMax",
+        baseUrl: runtime.minimaxBaseUrl,
+        apiKey: String(process.env.MINIMAX_API_KEY || "").trim(),
+        model: runtime.minimaxModel,
+        apiKeyHint: "Falta tu API key de MiniMax. Configurala en Ajustes para usar este cerebro en la nube."
+      };
+  }
+}
+
+async function callCloudProvider(
+  provider: "openrouter" | "deepseek" | "minimax",
+  messages: LlmMessage[],
+  _originalUserMessage: string,
+  requestContext: LlmRequestContext
+): Promise<LlmResponse & { provider: "openrouter" | "deepseek" | "minimax" }> {
+  const config = resolveCloudProviderConfig(provider);
+  if (!config.apiKey) throw new Error(config.apiKeyHint);
+  if (!config.model) throw new Error(`Elige un modelo de ${config.label} en la pestana Modelo.`);
+  const chatUrl = `${config.baseUrl.replace(/\/$/, "")}/chat/completions`;
+  const maxTokens = Math.max(requestContext.maxTokens || runtime.llmMaxTokens, config.minOutputTokens || 0);
+  const llmHttpStarted = Date.now();
+  try {
+    const json = await postOpenAiCompatibleJson(chatUrl, config.apiKey, {
+      model: config.model,
+      messages,
+      temperature: 0.7,
+      max_tokens: maxTokens,
+      stream: false
+    }, 60000, config.label, config.extraHeaders);
+    const llmHttpMs = Date.now() - llmHttpStarted;
+    const extracted = extractLlmResponse(json, { requestedModel: config.model, apiMode: "openai" });
+    const finalContent = sanitizeFinalContent(extracted.finalContent || "");
+    if (!finalContent) throw new Error(`${config.label} no devolvio texto final.`);
+    const responseModel = (typeof json.model === "string" && json.model) || config.model;
+    recordLlmSuccess({ provider, model: responseModel, endpoint: chatUrl, apiMode: "openai" });
+    return {
+      text: finalContent,
+      provider,
+      model: responseModel,
+      reasoningContent: runtime.llmThinkingMode === "off" ? null : sanitizeReasoningContent(extracted.reasoningContent, runtime.llmReasoningMaxChars),
+      hadReasoning: extracted.hadReasoning,
+      finishReason: extracted.finishReason,
+      repairedFromReasoningOnly: extracted.repairedFromReasoningOnly,
+      reasoningTruncatedBeforeFinal: extracted.reasoningTruncatedBeforeFinal,
+      metadata: { timings: { llmHttpMs } }
+    };
+  } catch (error) {
+    recordLlmError({ provider, model: config.model, endpoint: chatUrl, apiMode: "openai", error: error instanceof Error ? error.message : String(error) });
+    throw error;
+  }
+}
+
+// Lista en vivo de modelos para los cerebros de nube. Gemini/OpenRouter/DeepSeek exponen
+// GET {base}/models (estilo OpenAI { data: [{ id }] }); MiniMax NO lo expone, asi que para
+// el devolvemos una lista estatica. Sirve para poblar el dropdown sin inventar nombres.
+export async function listCloudModels(provider: CloudProvider): Promise<{ ok: boolean; models: string[]; error?: string; status?: number }> {
+  if (provider === "minimax") {
+    return { ok: true, models: [...MINIMAX_STATIC_MODELS] };
+  }
+  const settings = resolveCloudModelsListConfig(provider);
+  if (settings.authRequired && !settings.apiKey) {
+    return { ok: false, models: [], error: `Falta tu API key de ${settings.label}. Configurala en Ajustes.` };
+  }
+  const modelsUrl = `${settings.baseUrl.replace(/\/$/, "")}/models`;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
   try {
-    const response = await fetch(modelsUrl, {
-      method: "GET",
-      headers: { Authorization: `Bearer ${apiKey}` },
-      signal: controller.signal
-    });
+    const headers: Record<string, string> = {};
+    if (settings.apiKey) headers.Authorization = `Bearer ${settings.apiKey}`;
+    const response = await fetch(modelsUrl, { method: "GET", headers, signal: controller.signal });
     const raw = await response.text();
-    if (!response.ok) return { ok: false, models: [], error: `Gemini HTTP ${response.status}`, status: response.status };
+    if (!response.ok) return { ok: false, models: [], error: `${settings.label} HTTP ${response.status}`, status: response.status };
     const json = safeJson(raw) as { data?: Array<{ id?: string }> };
     const models = Array.isArray(json.data)
       ? json.data.map((item) => String(item?.id || "").replace(/^models\//, "")).filter(Boolean)
@@ -350,6 +442,23 @@ export async function listGeminiModels(): Promise<{ ok: boolean; models: string[
   } finally {
     clearTimeout(timeout);
   }
+}
+
+function resolveCloudModelsListConfig(provider: "gemini" | "openrouter" | "deepseek"): { label: string; baseUrl: string; apiKey: string; authRequired: boolean } {
+  switch (provider) {
+    case "gemini":
+      return { label: "Gemini", baseUrl: runtime.geminiBaseUrl, apiKey: String(process.env.GEMINI_API_KEY || "").trim(), authRequired: true };
+    case "openrouter":
+      // OpenRouter expone /models publicamente; mandamos la key si existe pero no es obligatoria.
+      return { label: "OpenRouter", baseUrl: runtime.openrouterBaseUrl, apiKey: String(process.env.OPENROUTER_API_KEY || "").trim(), authRequired: false };
+    case "deepseek":
+      return { label: "DeepSeek", baseUrl: runtime.deepseekBaseUrl, apiKey: String(process.env.DEEPSEEK_API_KEY || "").trim(), authRequired: true };
+  }
+}
+
+// Compat: el endpoint /api/llm/gemini-models sigue existiendo y delega aqui.
+export async function listGeminiModels(): Promise<{ ok: boolean; models: string[]; error?: string; status?: number }> {
+  return listCloudModels("gemini");
 }
 
 async function callLmStudioOpenAI(

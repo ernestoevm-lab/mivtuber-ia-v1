@@ -4,7 +4,7 @@ import { emitAvatarIdleSignal, emitAvatarSignal, getCurrentAvatarSignal, subscri
 import type { AvatarSignal } from "./avatar/types.js";
 import type { AvatarRuntimeStatus } from "./AvatarStage.js";
 import { enqueueSpeech, getVoiceVolume, isAudioUnlocked, replaySpeech, setVoiceVolume, stopSpeech, unlockAudio } from "./audioQueue.js";
-import { archiveMemory, backendAssetUrl, connectTikfinity, connectTwitch, createMemory, deleteMemory, deleteReferenceImage, disconnectTikfinity, disconnectTwitch, eventsWebSocketUrl, getAutonomyState, getAvatar, getAvatarHealth, getBackgrounds, getChatHistory, getGeminiModels, getGuard, getLogs, getMemories, getModels, getScene, getSecretsStatus, getStatus, getStreamUserMessages, getTikfinityState, getTts, getTwitchStatus, ingestChat, savePersona, saveResponseTiming, saveRuntime, saveScene, saveSecrets, saveTtsVoice, searchStreamUsers, selectModel, sendChat, sendTikfinityTestEvent, setSafetyMode, shutdownLuma, silenceNow, testTts, triggerAutonomy, updateAutonomyConfig, updateMemory, updateTikfinityConfig, uploadAvatar, uploadBackground, uploadReferenceImage, useActiveModel, getVtsStatus, connectVts, disconnectVts, getVtsHotkeys, triggerVtsHotkey, setVtsEmotionMap, setVtsEnabled, previewVtsEmotion } from "./api.js";
+import { archiveMemory, backendAssetUrl, connectTikfinity, connectTwitch, createMemory, deleteMemory, deleteReferenceImage, disconnectTikfinity, disconnectTwitch, eventsWebSocketUrl, getAutonomyState, getAvatar, getAvatarHealth, getBackgrounds, getChatHistory, getCloudModels, getGuard, getLogs, getMemories, getModels, getScene, getSecretsStatus, getStatus, getStreamUserMessages, getTikfinityState, getTts, getTwitchStatus, ingestChat, savePersona, saveResponseTiming, saveRuntime, saveScene, saveSecrets, saveTtsVoice, searchStreamUsers, selectModel, sendChat, sendTikfinityTestEvent, setSafetyMode, shutdownLuma, silenceNow, testTts, triggerAutonomy, updateAutonomyConfig, updateMemory, updateTikfinityConfig, uploadAvatar, uploadBackground, uploadReferenceImage, useActiveModel, getVtsStatus, connectVts, disconnectVts, getVtsHotkeys, triggerVtsHotkey, setVtsEmotionMap, setVtsEnabled, previewVtsEmotion } from "./api.js";
 import type { VtsStatusPayload, VtsHotkeyItem } from "./api.js";
 import { Sidebar } from "./components/Sidebar.js";
 import type { CockpitTab } from "./components/Sidebar.js";
@@ -83,6 +83,34 @@ const defaultScene: SceneSettings = {
   mode: "scene16x9"
 };
 
+const CLOUD_PROVIDERS = ["gemini", "openrouter", "deepseek", "minimax"];
+const CLOUD_PROVIDER_LABELS: Record<string, string> = {
+  gemini: "Gemini (nube)",
+  openrouter: "OpenRouter (nube)",
+  deepseek: "DeepSeek (nube)",
+  minimax: "MiniMax (nube)"
+};
+const CLOUD_KEY_ENV: Record<string, string> = {
+  gemini: "GEMINI_API_KEY",
+  openrouter: "OPENROUTER_API_KEY",
+  deepseek: "DEEPSEEK_API_KEY",
+  minimax: "MINIMAX_API_KEY"
+};
+function pickCloudProvider(raw: string) {
+  const provider = String(raw || "").toLowerCase();
+  return CLOUD_PROVIDERS.includes(provider) ? provider : "";
+}
+function runtimeModelForProvider(runtime: StatusPayload["runtime"] | undefined, provider: string) {
+  if (!runtime) return "";
+  switch (provider) {
+    case "gemini": return runtime.geminiModel;
+    case "openrouter": return runtime.openrouterModel;
+    case "deepseek": return runtime.deepseekModel;
+    case "minimax": return runtime.minimaxModel;
+    default: return "";
+  }
+}
+
 export default function App() {
   if (window.location.pathname === "/speaker") return <SpeakerPage />;
   const viewerOnly = window.location.pathname === "/viewer" || (window.location.pathname === "/" && isObsBrowserSource());
@@ -144,9 +172,10 @@ export default function App() {
   const [newImportance, setNewImportance] = useState(3);
   const [models, setModels] = useState<LocalModel[]>([]);
   const [modelChoice, setModelChoice] = useState("");
-  const [geminiModels, setGeminiModels] = useState<string[]>([]);
-  const [geminiModelChoice, setGeminiModelChoice] = useState("");
-  const [geminiModelsNotice, setGeminiModelsNotice] = useState("");
+  const [cloudModels, setCloudModels] = useState<string[]>([]);
+  const [cloudModelChoice, setCloudModelChoice] = useState("");
+  const [cloudModelsNotice, setCloudModelsNotice] = useState("");
+  const [cloudModelsProvider, setCloudModelsProvider] = useState("");
   const [vtsStatus, setVtsStatus] = useState<VtsStatusPayload | null>(null);
   const [vtsHotkeys, setVtsHotkeys] = useState<VtsHotkeyItem[]>([]);
   const [secretsStatus, setSecretsStatus] = useState<Record<string, boolean> | null>(null);
@@ -582,7 +611,6 @@ export default function App() {
       setPersona(next.persona);
       setMode(next.safety.mode);
       setModelChoice(next.runtime.lmStudioModel);
-      setGeminiModelChoice((current) => current || next.runtime.geminiModel || "");
       setRuntimeDraftProvider(next.runtime.llmProvider || "lmstudio");
       setRuntimeDraftBaseUrl(next.runtime.lmStudioBaseUrl || "");
     } catch {
@@ -627,7 +655,11 @@ export default function App() {
     try {
       const result = await saveSecrets(updates);
       setSecretsStatus(result.secrets);
-      if (updates.GEMINI_API_KEY?.trim()) setGeminiModels([]);
+      // Si se tocó la key de algún cerebro de nube, forzar recarga de su lista de modelos.
+      if (["GEMINI_API_KEY", "OPENROUTER_API_KEY", "DEEPSEEK_API_KEY", "MINIMAX_API_KEY"].some((key) => updates[key]?.trim())) {
+        setCloudModels([]);
+        setCloudModelsProvider("");
+      }
       if (result.activated) {
         setSecretsNotice(`Listo: Yuko ahora usa Gemini (modelo ${result.activated}).`);
         await refresh();
@@ -645,30 +677,34 @@ export default function App() {
     }
   }
 
-  // Al elegir Gemini como proveedor, traer la lista real de modelos de la nube
-  // (sin inventar nombres). Solo se consulta cuando hace falta.
+  // Al elegir un cerebro de nube como proveedor, traer su lista real de modelos
+  // (sin inventar nombres). Se recarga cuando cambia el proveedor seleccionado o su key.
   useEffect(() => {
-    const raw = (runtimeDraftProvider || "").toLowerCase();
-    if (raw !== "gemini" || geminiModels.length) return;
+    const provider = pickCloudProvider(runtimeDraftProvider || status?.runtime.llmProvider || "");
+    if (!provider || cloudModelsProvider === provider) return;
     let cancelled = false;
-    setGeminiModelsNotice("Cargando modelos de Gemini...");
-    getGeminiModels()
+    const label = CLOUD_PROVIDER_LABELS[provider] || "nube";
+    setCloudModelsProvider(provider);
+    setCloudModels([]);
+    setCloudModelChoice(runtimeModelForProvider(status?.runtime, provider) || "");
+    setCloudModelsNotice(`Cargando modelos de ${label}...`);
+    getCloudModels(provider)
       .then((res) => {
         if (cancelled) return;
         if (res.ok) {
-          setGeminiModels(res.models);
-          setGeminiModelsNotice(res.models.length ? "" : "Gemini no devolvió modelos.");
+          setCloudModels(res.models);
+          setCloudModelsNotice(res.models.length ? "" : `${label} no devolvió modelos.`);
         } else {
-          setGeminiModelsNotice(res.error || "No pude listar modelos de Gemini.");
+          setCloudModelsNotice(res.error || `No pude listar modelos de ${label}.`);
         }
       })
       .catch(() => {
-        if (!cancelled) setGeminiModelsNotice("No pude listar modelos de Gemini.");
+        if (!cancelled) setCloudModelsNotice(`No pude listar modelos de ${label}.`);
       });
     return () => {
       cancelled = true;
     };
-  }, [runtimeDraftProvider, geminiModels.length]);
+  }, [runtimeDraftProvider, status, cloudModelsProvider]);
 
   async function refreshVts() {
     try {
@@ -1594,13 +1630,20 @@ export default function App() {
     if (!status || modelBusy) return;
     setModelBusy(true);
     try {
+      // Cuando el proveedor es de nube, tambien se guarda el modelo elegido en su campo.
+      const cloudModelPatch: Partial<StatusPayload["runtime"]> = {};
+      if (CLOUD_PROVIDERS.includes(selectedProvider) && cloudModelChoice) {
+        if (selectedProvider === "gemini") cloudModelPatch.geminiModel = cloudModelChoice;
+        else if (selectedProvider === "openrouter") cloudModelPatch.openrouterModel = cloudModelChoice;
+        else if (selectedProvider === "deepseek") cloudModelPatch.deepseekModel = cloudModelChoice;
+        else if (selectedProvider === "minimax") cloudModelPatch.minimaxModel = cloudModelChoice;
+      }
       const payload = await saveRuntime({
         llmProvider: selectedProvider,
         lmStudioBaseUrl: selectedBaseUrl,
         lmStudioApiMode: status.runtime.lmStudioApiMode,
         lmStudioModel: modelChoice || status.runtime.lmStudioModel,
-        // Cuando el proveedor es Gemini, tambien se guarda el modelo de nube elegido.
-        ...(selectedProvider === "gemini" && geminiModelChoice ? { geminiModel: geminiModelChoice } : {})
+        ...cloudModelPatch
       });
       setLastResponse(null);
       if (payload?.runtime) {
@@ -1608,7 +1651,7 @@ export default function App() {
         setRuntimeDraftProvider(payload.runtime.llmProvider || "lmstudio");
         setRuntimeDraftBaseUrl(payload.runtime.lmStudioBaseUrl || "");
         setModelChoice(payload.runtime.lmStudioModel);
-        setGeminiModelChoice(payload.runtime.geminiModel || "");
+        setCloudModelChoice(runtimeModelForProvider(payload.runtime, payload.runtime.llmProvider || "") || "");
       }
       await refresh();
       setModelNotice("Proveedor, URL y modelo guardados. No se cargó ningún modelo nuevo.");
@@ -1971,9 +2014,15 @@ export default function App() {
   const activeProviderRaw = String(status?.runtime.llmProvider || "").toLowerCase();
   const modelName = activeProviderRaw === "gemini"
     ? (status?.runtime.geminiModel || "Gemini (nube)")
-    : activeProviderRaw === "ollama"
-      ? (status?.runtime.ollamaModel || "...")
-      : (status?.runtime.lmStudioModel || status?.runtime.ollamaModel || "...");
+    : activeProviderRaw === "openrouter"
+      ? (status?.runtime.openrouterModel || "OpenRouter (nube)")
+      : activeProviderRaw === "deepseek"
+        ? (status?.runtime.deepseekModel || "DeepSeek (nube)")
+        : activeProviderRaw === "minimax"
+          ? (status?.runtime.minimaxModel || "MiniMax (nube)")
+          : activeProviderRaw === "ollama"
+            ? (status?.runtime.ollamaModel || "...")
+            : (status?.runtime.lmStudioModel || status?.runtime.ollamaModel || "...");
   const latency = lastResponse ? formatDuration(lastResponse.timings.totalMs) : voiceLatency !== null ? formatDuration(voiceLatency) : "...";
   const llmLatency = lastResponse ? formatDuration(lastResponse.timings.llmMs) : "...";
   const voiceLatencyLabel = lastResponse?.timings.speechPlaybackMs !== undefined
@@ -2034,13 +2083,16 @@ export default function App() {
   );
   const activeProvider = status?.runtime.llmProvider || "lmstudio";
   const selectedProviderRaw = runtimeDraftProvider || activeProvider;
-  const selectedProvider = ["lmstudio", "gemini", "auto", "ollama"].includes(selectedProviderRaw) ? selectedProviderRaw : "lmstudio";
+  const selectedProvider = ["lmstudio", "gemini", "openrouter", "deepseek", "minimax", "auto", "ollama"].includes(selectedProviderRaw) ? selectedProviderRaw : "lmstudio";
   const activeBaseUrl = status?.runtime.lmStudioBaseUrl || "";
   const selectedBaseUrl = runtimeDraftBaseUrl || activeBaseUrl;
+  const cloudKeyEnv = CLOUD_KEY_ENV[selectedProvider] || "";
+  const cloudKeyConfigured = Boolean(cloudKeyEnv && secretsStatus?.[cloudKeyEnv]);
   const runtimeDraftDirty = Boolean(status && (
     selectedProvider !== activeProvider
     || selectedBaseUrl !== activeBaseUrl
     || (modelChoice && modelChoice !== status.runtime.lmStudioModel)
+    || (CLOUD_PROVIDERS.includes(selectedProvider) && cloudModelChoice !== runtimeModelForProvider(status.runtime, selectedProvider))
   ));
   const loadedChatModels = models.filter((model) => model.loaded).map((model) => model.id);
   const lastInferenceModel = status?.runtime.lastLlmSuccess?.model || lastResponse?.model || "";
@@ -2486,9 +2538,9 @@ export default function App() {
                 activeProvider={activeProvider}
                 activeProviderRaw={activeProviderRaw}
                 assistantName={assistantName}
-                geminiModelChoice={geminiModelChoice}
-                geminiModels={geminiModels}
-                geminiModelsNotice={geminiModelsNotice}
+                cloudModelChoice={cloudModelChoice}
+                cloudModels={cloudModels}
+                cloudModelsNotice={cloudModelsNotice}
                 lastInferenceStale={lastInferenceStale}
                 lastResponse={lastResponse}
                 loadedChatModels={loadedChatModels}
@@ -2504,14 +2556,14 @@ export default function App() {
                 selectedProvider={selectedProvider}
                 serverRunning={serverRunning}
                 status={status}
-                geminiKeyConfigured={Boolean(secretsStatus?.GEMINI_API_KEY)}
+                cloudKeyConfigured={cloudKeyConfigured}
                 secretsBusy={secretsBusy}
                 secretsNotice={secretsNotice}
-                onSaveGeminiKey={(key) => saveSecretsFromUi({ GEMINI_API_KEY: key }, "API key de Gemini guardada.")}
+                onSaveCloudKey={(key) => saveSecretsFromUi(cloudKeyEnv ? { [cloudKeyEnv]: key } : {}, `API key de ${CLOUD_PROVIDER_LABELS[selectedProvider] || "nube"} guardada.`)}
                 onApplyActiveModel={() => void applyActiveModel()}
                 onApplyModel={() => void applyModel()}
                 onBaseUrlChange={setRuntimeDraftBaseUrl}
-                onGeminiModelChange={setGeminiModelChoice}
+                onCloudModelChange={setCloudModelChoice}
                 onModelChoiceChange={setModelChoice}
                 onProviderChange={setRuntimeDraftProvider}
                 onUpdateRuntimeBase={() => void updateRuntimeBase()}

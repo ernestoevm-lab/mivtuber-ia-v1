@@ -354,6 +354,12 @@ export interface RuntimeConfig {
   lmStudioTtl: string;
   geminiModel: string;
   geminiBaseUrl: string;
+  openrouterBaseUrl: string;
+  openrouterModel: string;
+  deepseekBaseUrl: string;
+  deepseekModel: string;
+  minimaxBaseUrl: string;
+  minimaxModel: string;
   llmMaxTokens: number;
   llmLiveMaxTokens: number;
   llmAdminMaxTokens: number;
@@ -411,6 +417,12 @@ export function updateRuntimeConfig(updates: Partial<RuntimeConfig>) {
     lmStudioTtl: "LM_STUDIO_TTL",
     geminiModel: "GEMINI_MODEL",
     geminiBaseUrl: "GEMINI_BASE_URL",
+    openrouterBaseUrl: "OPENROUTER_BASE_URL",
+    openrouterModel: "OPENROUTER_MODEL",
+    deepseekBaseUrl: "DEEPSEEK_BASE_URL",
+    deepseekModel: "DEEPSEEK_MODEL",
+    minimaxBaseUrl: "MINIMAX_BASE_URL",
+    minimaxModel: "MINIMAX_MODEL",
     llmMaxTokens: "LLM_MAX_TOKENS",
     llmLiveMaxTokens: "LLM_LIVE_MAX_TOKENS",
     llmAdminMaxTokens: "LLM_ADMIN_MAX_TOKENS",
@@ -469,6 +481,12 @@ export function updateRuntimeModelConfig(updates: Partial<Pick<RuntimeConfig,
   "lmStudioTtl" |
   "geminiModel" |
   "geminiBaseUrl" |
+  "openrouterBaseUrl" |
+  "openrouterModel" |
+  "deepseekBaseUrl" |
+  "deepseekModel" |
+  "minimaxBaseUrl" |
+  "minimaxModel" |
   "llmMaxTokens" |
   "llmLiveMaxTokens" |
   "llmAdminMaxTokens" |
@@ -524,6 +542,12 @@ function readRuntime(): RuntimeConfig {
     lmStudioTtl: String(modelConfig.lmStudioTtl || process.env.LM_STUDIO_TTL || "").trim(),
     geminiModel: String(modelConfig.geminiModel || process.env.GEMINI_MODEL || "gemini-3.5-flash").trim(),
     geminiBaseUrl: String(modelConfig.geminiBaseUrl || process.env.GEMINI_BASE_URL || "https://generativelanguage.googleapis.com/v1beta/openai").trim(),
+    openrouterBaseUrl: String(modelConfig.openrouterBaseUrl || process.env.OPENROUTER_BASE_URL || "https://openrouter.ai/api/v1").trim(),
+    openrouterModel: String(modelConfig.openrouterModel || process.env.OPENROUTER_MODEL || "").trim(),
+    deepseekBaseUrl: String(modelConfig.deepseekBaseUrl || process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com").trim(),
+    deepseekModel: String(modelConfig.deepseekModel || process.env.DEEPSEEK_MODEL || "deepseek-v4-flash").trim(),
+    minimaxBaseUrl: String(modelConfig.minimaxBaseUrl || process.env.MINIMAX_BASE_URL || "https://api.minimax.io/v1").trim(),
+    minimaxModel: String(modelConfig.minimaxModel || process.env.MINIMAX_MODEL || "MiniMax-M3").trim(),
     llmMaxTokens: parsePositiveInt(modelConfig.llmMaxTokens || process.env.LLM_MAX_TOKENS, 240),
     llmLiveMaxTokens: parsePositiveInt(modelConfig.llmLiveMaxTokens || process.env.LLM_LIVE_MAX_TOKENS, 240),
     llmAdminMaxTokens: parsePositiveInt(modelConfig.llmAdminMaxTokens || process.env.LLM_ADMIN_MAX_TOKENS, 240),
@@ -633,6 +657,12 @@ function readRuntimeModelConfig(options: { ignoreEnvMtime?: boolean } = {}): Par
       // se releia (se perdia al refrescar runtime), por eso cambiar de modelo Gemini no aplicaba.
       geminiModel: typeof raw.geminiModel === "string" ? raw.geminiModel : undefined,
       geminiBaseUrl: typeof raw.geminiBaseUrl === "string" ? raw.geminiBaseUrl : undefined,
+      openrouterBaseUrl: typeof raw.openrouterBaseUrl === "string" ? raw.openrouterBaseUrl : undefined,
+      openrouterModel: typeof raw.openrouterModel === "string" ? raw.openrouterModel : undefined,
+      deepseekBaseUrl: typeof raw.deepseekBaseUrl === "string" ? raw.deepseekBaseUrl : undefined,
+      deepseekModel: typeof raw.deepseekModel === "string" ? raw.deepseekModel : undefined,
+      minimaxBaseUrl: typeof raw.minimaxBaseUrl === "string" ? raw.minimaxBaseUrl : undefined,
+      minimaxModel: typeof raw.minimaxModel === "string" ? raw.minimaxModel : undefined,
       llmMaxTokens: Number.isFinite(Number(raw.llmMaxTokens)) ? Number(raw.llmMaxTokens) : undefined,
       llmLiveMaxTokens: Number.isFinite(Number(raw.llmLiveMaxTokens)) ? Number(raw.llmLiveMaxTokens) : undefined,
       llmAdminMaxTokens: Number.isFinite(Number(raw.llmAdminMaxTokens)) ? Number(raw.llmAdminMaxTokens) : undefined,

@@ -82,7 +82,7 @@ export interface ChatResponse {
   emotionIntensity: EmotionIntensity;
   action: "speak" | "blocked" | "draft" | "silent" | "ignored";
   approved: boolean;
-  provider: "lmstudio" | "ollama" | "hermes" | "gemini" | "fallback";
+  provider: "lmstudio" | "ollama" | "gemini" | "openrouter" | "deepseek" | "minimax" | "fallback";
   model: string;
   timings: ChatResponseTimings;
   ttsPending?: boolean;
@@ -153,6 +153,12 @@ export interface StatusPayload {
     lmStudioTtl: string;
     geminiModel: string;
     geminiBaseUrl: string;
+    openrouterModel: string;
+    openrouterBaseUrl: string;
+    deepseekModel: string;
+    deepseekBaseUrl: string;
+    minimaxModel: string;
+    minimaxBaseUrl: string;
     llmMaxTokens: number;
     llmLiveMaxTokens: number;
     llmAdminMaxTokens: number;
